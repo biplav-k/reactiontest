@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Full Page Reaction Time Test</title>
+  <!-- Import a modern Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* CSS Variables for easy theme management */
+    :root {
+      --primary-color: #4caf50;        /* Green: Ready-to-click */
+      --secondary-color: #ff4c4c;      /* Red: Wait indicator */
+      --neutral-color: #e0e0e0;        /* Neutral background */
+      --background-color: #f5f5f5;     /* Light overall background */
+      --text-color: #333333;
+      --overlay-bg: rgba(255, 255, 255, 0.85);
+      --shadow-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--background-color);
+      overflow: hidden;
+    }
+
+    /* Full page test area */
+    #test-area {
+      width: 100%;
+      height: 100vh;
+      background-color: var(--neutral-color);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #test-area:active {
+      transform: scale(0.98);
+    }
+
+    /* Instruction overlay at the top */
+    .instructions-overlay {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.1rem;
+      text-align: center;
+      background: var(--overlay-bg);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px var(--shadow-color);
+      z-index: 10;
+    }
+
+    /* Result display overlay at the bottom */
+    #result {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.1rem;
+      text-align: center;
+      background: var(--overlay-bg);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px var(--shadow-color);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="instructions-overlay">
+    When the screen turns green, click as quickly as possible. Click anywhere to start.
+  </div>
+  <div id="test-area">Click to Start</div>
+  <div id="result"></div>
+
+  <script>
+    // Define states: 'start' (ready to begin), 'waiting' (after click, before green), 'ready' (green - click now!)
+    let state = 'start';
+    let timeoutID;
+    let startTime;
+    const reactionTimes = [];
+
+    const testArea = document.getElementById('test-area');
+    const resultDiv = document.getElementById('result');
+
+    testArea.addEventListener('click', () => {
+      if (state === 'start') {
+        // Start test: instruct user to wait for the green signal
+        testArea.textContent = 'Wait for green...';
+        testArea.style.backgroundColor = 'var(--secondary-color)';
+        state = 'waiting';
+
+        // Set a random delay between 2 and 5 seconds (2000-5000 ms)
+        const randomDelay = Math.floor(Math.random() * 3000) + 2000;
+        timeoutID = setTimeout(() => {
+          testArea.style.backgroundColor = 'var(--primary-color)';
+          testArea.textContent = 'Click!';
+          state = 'ready';
+          startTime = new Date().getTime();
+        }, randomDelay);
+      } else if (state === 'waiting') {
+        // Clicked too early: reset the test
+        clearTimeout(timeoutID);
+        testArea.textContent = 'Too soon! Click to try again.';
+        testArea.style.backgroundColor = 'var(--neutral-color)';
+        state = 'start';
+      } else if (state === 'ready') {
+        // Valid click: measure reaction time
+        const reactionTime = new Date().getTime() - startTime;
+        reactionTimes.push(reactionTime);
+        testArea.textContent = `Your reaction time: ${reactionTime} ms.\nClick to try again.`;
+        testArea.style.backgroundColor = 'var(--neutral-color)';
+        state = 'start';
+
+        // Calculate and display the average reaction time
+        const total = reactionTimes.reduce((acc, cur) => acc + cur, 0);
+        const avg = Math.floor(total / reactionTimes.length);
+        resultDiv.innerHTML = `<p>Average Reaction Time: ${avg} ms (over ${reactionTimes.length} attempt${reactionTimes.length > 1 ? 's' : ''})</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
